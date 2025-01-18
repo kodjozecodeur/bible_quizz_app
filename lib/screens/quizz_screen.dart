@@ -13,7 +13,8 @@ class QuizzScreen extends StatefulWidget {
 
 class _QuizzScreenState extends State<QuizzScreen> {
   final TextEditingController textController = TextEditingController();
-  List _books = []; //to store the elements from the json
+  List<Map<String, dynamic>> _books = [];
+  List<Map<String, dynamic>> _sessionBooks = [];
   int _currentIndex = 0;
 
   @override
@@ -32,33 +33,85 @@ class _QuizzScreenState extends State<QuizzScreen> {
 
   //fetch from json file
   Future<void> readJson() async {
-    final String response = await rootBundle.loadString(
-        'assets/books.json'); //load the json as a string form the json file
-    final data = await jsonDecode(response);
-    setState(() {
-      _books = data["bibleBooks"];
-      // print("...number of books ${_books.length}");
-    });
+    try {
+      //load the json from the file
+      final String response = await rootBundle.loadString('assets/books.json');
+      //decode the json to map
+      final data = jsonDecode(response);
+      //extractthe books and shuffle them
+      setState(() {
+        _books = List<Map<String, dynamic>>.from(data["bibleBooks"]);
+        //shuffle the books
+        _books.shuffle(Random());
+        _sessionBooks = _books.take(5).toList();
+        print(_sessionBooks);
+      });
+    } catch (e) {
+      print("error loading json: $e");
+    }
   }
 
-  //check the inout
+  // //check the inout
   void checkWord() {
-    String userInput = textController.text.trim();
-    String originalWord = _books[_currentIndex]["name"];
+    // Prevent out-of-range errors
+    if (_currentIndex >= _sessionBooks.length) {
+      showCompletionDialog(); // Show completion dialog if the session is finished
+      return;
+    } //to prevent out of range
+    //time to check the user input
+
+    String userInput =
+        textController.text.trim(); // to prevent any trailing space
+    String originalWord = _sessionBooks[_currentIndex]["name"]!;
 
     if (userInput.toLowerCase() == originalWord.toLowerCase()) {
-      print("correct");
       setState(() {
         _currentIndex++;
         textController.clear();
       });
+      if (_currentIndex >= _sessionBooks.length) {
+        showCompletionDialog(); // End session
+      }
+      print("correct");
     } else {
       print("incorrect answer");
     }
   }
 
-  //nscramble the letters
-  // Function to scramble letters in a string
+//completion dialog
+  void showCompletionDialog() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text("Session Complete"),
+          // content: Text("Your score is $_score out of 5"),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                resetGame(); // Reset for a new session
+              },
+              child: Text("Restart"),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  //reset game
+  // Reset the game for a new session
+  void resetGame() {
+    setState(() {
+      _currentIndex = 0;
+      // _score = 0;
+      _sessionBooks = (_books..shuffle()).take(5).toList();
+    });
+  }
+
+  //scramble the letters
+  //Function to scramble letters in a string
   String scramble(String word) {
     List<String> characters = word.split(''); // Split the word into characters
     characters.shuffle(Random()); // Shuffle the characters randomly
@@ -82,7 +135,9 @@ class _QuizzScreenState extends State<QuizzScreen> {
               color: Colors.black,
             ),
             child: Text(
-              scramble(_books[_currentIndex]["name"]),
+              scramble(
+                _sessionBooks[_currentIndex]["name"],
+              ),
               style: TextStyle(
                 fontSize: 30,
                 color: Color(0xFFFFFFFF),
