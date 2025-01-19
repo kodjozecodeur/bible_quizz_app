@@ -1,4 +1,4 @@
-import 'package:bible_quizz_app/screens/quizz_screen.dart';
+import 'package:bible_quizz_app/screens/game_screen.dart';
 import 'package:flutter/material.dart';
 
 void main() {
@@ -18,7 +18,7 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: QuizzScreen(),
+      home: GameScreen(),
     );
   }
 }

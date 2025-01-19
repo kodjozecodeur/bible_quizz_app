@@ -15,7 +15,10 @@ class _QuizzScreenState extends State<QuizzScreen> {
   final TextEditingController textController = TextEditingController();
   List<Map<String, dynamic>> _books = [];
   List<Map<String, dynamic>> _sessionBooks = [];
+  //scoring
+  int _score = 0;
   int _currentIndex = 0;
+  int _incorrectAttempts = 0;
 
   @override
   void initState() {
@@ -34,30 +37,37 @@ class _QuizzScreenState extends State<QuizzScreen> {
   //fetch from json file
   Future<void> readJson() async {
     try {
-      //load the json from the file
+      // Load the JSON from the file
       final String response = await rootBundle.loadString('assets/books.json');
-      //decode the json to map
+      // Decode the JSON to a Map
       final data = jsonDecode(response);
-      //extractthe books and shuffle them
+
       setState(() {
-        _books = List<Map<String, dynamic>>.from(data["bibleBooks"]);
-        //shuffle the books
+        // Extract the books, convert names to lowercase, and shuffle them
+        _books =
+            List<Map<String, dynamic>>.from(data["bibleBooks"]).map((book) {
+          return {
+            "id": book["id"].toString(), // Ensure ID is a string
+            "name": book["name"]!.toLowerCase(), // Convert name to lowercase
+          };
+        }).toList();
+
+        // Shuffle the books
         _books.shuffle(Random());
+
+        // Take the first 5 books for the session
         _sessionBooks = _books.take(5).toList();
-        print(_sessionBooks);
+        // print(_sessionBooks); // Debugging: Print the selected books
       });
     } catch (e) {
-      print("error loading json: $e");
+      print("Error loading JSON: $e");
     }
   }
 
   // //check the inout
   void checkWord() {
     // Prevent out-of-range errors
-    if (_currentIndex >= _sessionBooks.length) {
-      showCompletionDialog(); // Show completion dialog if the session is finished
-      return;
-    } //to prevent out of range
+    if (_currentIndex >= _sessionBooks.length) return; //to prevent out of range
     //time to check the user input
 
     String userInput =
@@ -66,15 +76,25 @@ class _QuizzScreenState extends State<QuizzScreen> {
 
     if (userInput.toLowerCase() == originalWord.toLowerCase()) {
       setState(() {
+        _score++;
         _currentIndex++;
         textController.clear();
       });
       if (_currentIndex >= _sessionBooks.length) {
         showCompletionDialog(); // End session
+      } else {
+        print("correct");
       }
-      print("correct");
     } else {
-      print("incorrect answer");
+      setState(() {
+        _incorrectAttempts++;
+        print("incorrect answer");
+        showIncorrectFeedback();
+      });
+
+      if (_incorrectAttempts >= 3) {
+        showCompletionDialog();
+      }
     }
   }
 
@@ -100,12 +120,34 @@ class _QuizzScreenState extends State<QuizzScreen> {
     );
   }
 
+  void showIncorrectFeedback() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text("Incorrect"),
+          content:
+              const Text("Oops! That’s not the correct answer. Try again."),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Close the dialog
+                textController.clear(); // Clear the input for retry
+              },
+              child: const Text("Retry"),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   //reset game
   // Reset the game for a new session
   void resetGame() {
     setState(() {
       _currentIndex = 0;
-      // _score = 0;
+      _score = 0;
       _sessionBooks = (_books..shuffle()).take(5).toList();
     });
   }
@@ -124,57 +166,62 @@ class _QuizzScreenState extends State<QuizzScreen> {
       appBar: AppBar(
         title: Text("Quizz App"),
       ),
-      body: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            width: double.infinity,
-            padding: EdgeInsets.all(16),
-            margin: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-            decoration: BoxDecoration(
-              color: Colors.black,
-            ),
-            child: Text(
-              scramble(
-                _sessionBooks[_currentIndex]["name"],
-              ),
-              style: TextStyle(
-                fontSize: 30,
-                color: Color(0xFFFFFFFF),
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ),
-          SizedBox(
-            height: 20,
-          ),
-          //input field
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: Container(
-              decoration: BoxDecoration(
-                border: Border.all(width: 1, color: Colors.grey),
-                borderRadius: BorderRadius.all(
-                  Radius.circular(20),
+      body: _currentIndex < _sessionBooks.length
+          ? Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  width: double.infinity,
+                  padding: EdgeInsets.all(16),
+                  margin: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: Colors.black,
+                  ),
+                  child: Text(
+                    scramble(
+                      _sessionBooks[_currentIndex]["name"],
+                    ),
+                    style: TextStyle(
+                      fontSize: 30,
+                      color: Color(0xFFFFFFFF),
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
                 ),
-              ),
-              child: TextField(
-                controller: textController,
-                decoration: InputDecoration(
-                  border: InputBorder.none,
+                SizedBox(
+                  height: 20,
                 ),
-              ),
+                //input field
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      border: Border.all(width: 1, color: Colors.grey),
+                      borderRadius: BorderRadius.all(
+                        Radius.circular(20),
+                      ),
+                    ),
+                    child: TextField(
+                      controller: textController,
+                      decoration: InputDecoration(
+                        border: InputBorder.none,
+                      ),
+                    ),
+                  ),
+                ),
+                SizedBox(
+                  height: 20,
+                ),
+                Text("you scored $_score out of ${_sessionBooks.length}"),
+                ElevatedButton(
+                  onPressed: checkWord,
+                  child: Text("submit"),
+                )
+              ],
+            )
+          : Center(
+              child: CircularProgressIndicator(),
             ),
-          ),
-          SizedBox(
-            height: 20,
-          ),
-          ElevatedButton(
-            onPressed: checkWord,
-            child: Text("submit"),
-          )
-        ],
-      ),
     );
   }
 }
