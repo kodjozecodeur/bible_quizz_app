@@ -1,5 +1,7 @@
+import 'package:bible_quizz_app/provider/books_retreiver_provider.dart';
 import 'package:bible_quizz_app/screens/game_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 void main() {
   runApp(const MyApp());
@@ -11,14 +13,17 @@ class MyApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'Quizz App',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        useMaterial3: true,
+    return ChangeNotifierProvider(
+      create: (BuildContext context) => BooksRetreiverProvider(),
+      child: MaterialApp(
+        debugShowCheckedModeBanner: false,
+        title: 'Quizz App',
+        theme: ThemeData(
+          colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+          useMaterial3: true,
+        ),
+        home: GameScreen(),
       ),
-      home: GameScreen(),
     );
   }
 }
