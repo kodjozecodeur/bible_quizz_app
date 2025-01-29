@@ -1,5 +1,5 @@
 import 'package:bible_quizz_app/provider/books_retreiver_provider.dart';
-import 'package:bible_quizz_app/screens/game_screen.dart';
+import 'package:bible_quizz_app/screens/welcome_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -22,7 +22,7 @@ class MyApp extends StatelessWidget {
           colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
           useMaterial3: true,
         ),
-        home: GameScreen(),
+        home: WelcomeScreen(),
       ),
     );
   }

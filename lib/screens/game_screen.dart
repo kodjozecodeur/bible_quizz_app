@@ -1,233 +1,309 @@
-import 'package:bible_quizz_app/provider/books_retreiver_provider.dart';
-import 'package:bible_quizz_app/widgets/stats_tile.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 
-class GameScreen extends StatefulWidget {
+class GameScreen extends StatelessWidget {
   const GameScreen({super.key});
-
-  @override
-  State<GameScreen> createState() => _GameScreenState();
-}
-
-class _GameScreenState extends State<GameScreen> {
-  final TextEditingController _answerController =
-      TextEditingController(); // Add this controller
-
-  @override
-  void initState() {
-    super.initState();
-    // Initialize books when screen loads
-    Future.microtask(() => context.read<BooksRetreiverProvider>().readJson());
-  }
-
-  @override
-  void dispose() {
-    _answerController.dispose(); // Dispose of the controller when done
-    super.dispose();
-  }
-
-  Padding textInput() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-        decoration: BoxDecoration(
-          border: Border.all(width: 1, color: Color(0xFFF0F2F5)),
-          color: Color(0xFFF0F2F5),
-          borderRadius: BorderRadius.all(
-            Radius.circular(12),
-          ),
-        ),
-        child: TextField(
-          controller: _answerController,
-          decoration: InputDecoration(
-              border: InputBorder.none,
-              hintText: "Type your answer here",
-              hintStyle: TextStyle(
-                color: Color(0xFF637587),
-                fontSize: 18,
-              )),
-        ),
-      ),
-    );
-  }
-
-  Container wordCase(BooksRetreiverProvider booksProvider) {
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.all(16),
-      margin: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-      decoration: BoxDecoration(
-          color: Colors.black,
-          borderRadius: BorderRadius.all(Radius.circular(12))),
-      child: Text(
-        booksProvider.currentScrambledWord,
-        style: TextStyle(
-          fontSize: 30,
-          color: Color(0xFFFFFFFF),
-        ),
-        textAlign: TextAlign.center,
-      ),
-    );
-  }
-
-  Padding scoreSection() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Consumer<BooksRetreiverProvider>(
-        builder: (BuildContext context, booksProvider, child) {
-          return Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              //score tile
-              StatsTile(
-                scoreNumber: "${booksProvider.score} \n",
-                description: 'Points',
-              ),
-              StatsTile(
-                scoreNumber: "${booksProvider.streak} \n",
-                description: 'Streak',
-              ),
-            ],
-          );
-        },
-      ),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFFFFFF),
-      body: SafeArea(
+      resizeToAvoidBottomInset: true,
+      body: Container(
+        constraints: BoxConstraints.expand(), //fills all the space(remember)
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Color(0xFF283595),
+              Color(0xFF6A4F9F),
+            ],
+          ),
+        ),
+        child: SafeArea(
+          child: Column(
+            children: [
+              Expanded(
+                child: SingleChildScrollView(
+                  child: Column(
+                    children: [
+                      SizedBox(
+                        height: 20,
+                      ),
+                      //scoretile and timer in game screen
+                      _buildTopBar(),
+                      SizedBox(
+                        height: 20,
+                      ),
+                      Text(
+                        "Which book of the bible is this?",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.w400,
+                        ),
+                      ),
+                      SizedBox(
+                        height: 20,
+                      ),
+                      _buildScrambleBar(),
+                      SizedBox(
+                        height: 50,
+                      ),
+
+                      _buildWordInput(),
+                      SizedBox(
+                        height: 20,
+                      ),
+                      _buildHintbar(),
+                      //bottom stats
+                    ],
+                  ),
+                ),
+              ),
+              _buildBottomStats(),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Container _buildBottomStats() {
+    return Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: 20,
+        vertical: 10,
+      ),
+      decoration: BoxDecoration(
+        color: Color(0xFF4E58AB),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [
+          //statsTile
+          _buildStatItem("level", "1/5"),
+          _buildStatItem("Correct words", "12"),
+          _buildStatItem("Streak", "🔥 4"),
+        ],
+      ),
+    );
+  }
+
+  Container _buildHintbar() {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.symmetric(
+        horizontal: 20,
+        vertical: 10,
+      ),
+      decoration: BoxDecoration(
+        color: Color(0xFF4E58AB),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      margin: EdgeInsets.symmetric(horizontal: 20),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          //icons
+          Row(
+            children: [
+              Text(
+                "Need a hint?",
+                style: TextStyle(color: Colors.white),
+              ),
+              SizedBox(
+                width: 10,
+              ),
+            ],
+          ),
+          //score value
+          Row(
+            children: [
+              ElevatedButton.icon(
+                onPressed: () {},
+                icon: Icon(Icons.lightbulb_outline),
+                label: Text('Get Hint'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.amber,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+            ],
+          )
+          //button
+        ],
+      ),
+    );
+  }
+
+  Padding _buildWordInput() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Container(
+        padding: EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+        ),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
+            TextField(
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+              ),
+              decoration: InputDecoration(
+                hintText: 'Enter Answer',
+                hintStyle: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 24,
+                ),
+                border: OutlineInputBorder(
+                  borderSide: BorderSide(
+                    color: Color(0xFF283595),
+                  ),
+                ),
+                filled: true,
+                fillColor: Colors.grey[100],
+              ),
+            ),
             SizedBox(
-              height: 25,
+              height: 20,
             ),
-            //score and streak point
-            scoreSection(),
-
-            Spacer(),
-            //scramble word case
-            Consumer<BooksRetreiverProvider>(
-              builder: (context, booksProvider, child) {
-                if (booksProvider.sessionBooks.isEmpty ||
-                    booksProvider.currentIndex >
-                        booksProvider.sessionBooks.length) {
-                  return Center(
-                    child: CircularProgressIndicator(),
-                  );
-                } else {
-                  return wordCase(booksProvider);
-                }
-              },
-            ),
-            //input for validation
             SizedBox(
-              height: 25,
-            ),
-            //input for validation
-            SizedBox(
-              height: 25,
-            ),
-            textInput(),
-
-            Spacer(),
-            //validation button
-            submitButton(),
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () {},
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Color(0xFF1A237E),
+                  padding: EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(15),
+                  ),
+                ),
+                child: Text(
+                  'Submit',
+                  style: TextStyle(
+                    fontSize: 18,
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            )
           ],
         ),
       ),
     );
   }
 
-  Widget submitButton() {
-    return Consumer<BooksRetreiverProvider>(
-      builder: (context, booksProvider, child) {
-        if (booksProvider.isGameComplete) {
-          return Container(
-            width: double.infinity,
-            padding: EdgeInsets.all(16),
-            margin: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-            decoration: BoxDecoration(
-                color: Colors.green,
-                borderRadius: BorderRadius.all(Radius.circular(30))),
-            child: Text(
-              "Game Complete! Final Score: ${booksProvider.score}",
-              style: TextStyle(
-                fontSize: 20,
-                color: Color(0xFFFFFFFF),
-              ),
-              textAlign: TextAlign.center,
-            ),
-          );
-        }
-
-        return GestureDetector(
-          onTap: () {
-            bool isCorrect = booksProvider.checkAnswer(_answerController.text);
-
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(
-                  isCorrect
-                      ? booksProvider.isGameComplete
-                          ? 'Game Complete!'
-                          : 'Correct!'
-                      : 'Try again!',
-                  style: TextStyle(color: Colors.white),
-                ),
-                backgroundColor: isCorrect ? Colors.green : Colors.red,
-                duration: Duration(seconds: 1),
-              ),
-            );
-
-            _answerController.clear();
-
-            // If game is complete, you might want to navigate or show a dialog
-            if (booksProvider.isGameComplete) {
-              showDialog(
-                context: context,
-                builder: (context) => AlertDialog(
-                  title: Text('Congratulations!'),
-                  content: Text(
-                      'You completed the game!\nFinal Score: ${booksProvider.score}'),
-                  actions: [
-                    TextButton(
-                      onPressed: () {
-                        Navigator.pop(context); // Close dialog
-                        // You might want to navigate back or restart game
-                        // Navigator.pop(context);  // Go back to previous screen
-                        booksProvider.resetGame();
-                      },
-                      child: Text('OK'),
-                    ),
-                  ],
-                ),
-              );
-            }
-          },
-          child: Container(
-            width: double.infinity,
-            padding: EdgeInsets.all(16),
-            margin: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-            decoration: BoxDecoration(
-                color: Color(0xFF1A80E5),
-                borderRadius: BorderRadius.all(Radius.circular(30))),
-            child: Text(
-              "Submit",
-              style: TextStyle(
-                fontSize: 20,
-                color: Color(0xFFFFFFFF),
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ),
-        );
-      },
+  Container _buildScrambleBar() {
+    return Container(
+      width: double.infinity,
+      margin: EdgeInsets.symmetric(horizontal: 24),
+      padding: EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+      decoration: BoxDecoration(
+        color: Color(0xFF4E58AB),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(
+        textAlign: TextAlign.center,
+        'SENSIGE',
+        style: TextStyle(
+          fontSize: 36,
+          color: Colors.white,
+          fontWeight: FontWeight.bold,
+          letterSpacing: 8,
+        ),
+      ),
     );
   }
+
+  Container _buildTopBar() {
+    return Container(
+      height: 50,
+      width: double.infinity,
+      padding: EdgeInsets.symmetric(
+        horizontal: 20,
+        vertical: 10,
+      ),
+      decoration: BoxDecoration(
+        color: Color(0xFF4E58AB),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      margin: EdgeInsets.symmetric(horizontal: 20),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          //icons
+          Row(
+            children: [
+              Icon(
+                Icons.timer,
+                color: Colors.white,
+              ),
+              SizedBox(
+                width: 10,
+              ),
+              Text(
+                "0:45",
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                ),
+              ),
+            ],
+          ),
+          //score value
+          Row(
+            children: [
+              Icon(
+                Icons.star_rounded,
+                color: Color(0xFFFFC700),
+              ),
+              SizedBox(
+                width: 10,
+              ),
+              Text(
+                "100",
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.white,
+                ),
+              )
+            ],
+          )
+          //button
+        ],
+      ),
+    );
+  }
+}
+
+Widget _buildStatItem(String label, String value) {
+  return Column(
+    children: [
+      Text(
+        label,
+        style: TextStyle(
+          fontSize: 14,
+          color: Colors.white70,
+        ),
+      ),
+      SizedBox(height: 4),
+      Text(
+        value,
+        style: TextStyle(
+          fontSize: 18,
+          color: Colors.white,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    ],
+  );
 }
