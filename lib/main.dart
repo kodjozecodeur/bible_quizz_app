@@ -1,7 +1,9 @@
 import 'package:bible_quizz_app/provider/books_retreiver_provider.dart';
-import 'package:bible_quizz_app/screens/welcome_screen.dart';
+import 'package:bible_quizz_app/screens/home_screen.dart';
+import 'package:bible_quizz_app/screens/username_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   runApp(const MyApp());
@@ -10,20 +12,31 @@ void main() {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (BuildContext context) => BooksRetreiverProvider(),
+      create: (context) => BooksRetreiverProvider(),
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
-        title: 'Quizz App',
-        theme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-          useMaterial3: true,
+        home: FutureBuilder<String?>(
+          future: _getStoredUsername(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            if (snapshot.data?.isNotEmpty == true) {
+              return HomeScreen(); // Skip username screen
+            } else {
+              return UserNameScreen();
+            }
+          },
         ),
-        home: WelcomeScreen(),
       ),
     );
+  }
+
+  Future<String?> _getStoredUsername() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('userName');
   }
 }
